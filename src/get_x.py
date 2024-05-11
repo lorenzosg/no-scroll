@@ -9,7 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 
-bearer_token = 'AAAAAAAAAAAAAAAAAAAAAOF%2BtQEAAAAAYiICei0NOP%2BtAaDiaeyAXbkVMM0%3Dgl2fvo5dWW1hT6ZZy65MUw7hiYTazW43MupSoQ53KmA6vzRC6E'
+bearer_token = 'bearer token here'
 lst_fields = "created_at,follower_count"
 user_fields = 'created_at,description'
 
