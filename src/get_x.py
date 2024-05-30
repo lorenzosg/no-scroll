@@ -19,7 +19,7 @@ class get_posts:
     def __init__(self):
         self.posts = {}
 
-    def bearer_oauth(r):
+    def bearer_oauth(self, r):
         """
         Method required by bearer token authentication.
         """
@@ -29,7 +29,7 @@ class get_posts:
         return r
 
 
-    def create_url(query, id="276332668"):
+    def create_url(self, query, id="276332668"):
         """
         Formats the proper url for the three separate queries needed to obtain the tweets from the accounts
         in a users list
@@ -52,7 +52,7 @@ class get_posts:
 
         return url 
 
-    def parameters(query = 'query'):
+    def parameters(self, query = 'query'):
         """
         Formats the proper parameters for the needed endoints to obtain essential data on tweets for the accounts in the user's list
 
@@ -78,7 +78,7 @@ class get_posts:
 
 
 
-    def connect_endpoint(url, params):
+    def connect_endpoint(self, url, params):
         """
         Makes the api call to twitter using the url and parametrs specified in the previous functions
 
@@ -104,7 +104,7 @@ class get_posts:
 
 
 
-    def get_data(query, id="276332668"):
+    def get_data(self, query, id="276332668"):
         """
         Makes the api call to twitter using the url and parametrs specified in the previous functions
 
@@ -118,15 +118,15 @@ class get_posts:
         A dictionary of accounts and data requested given the parameters 
 
         """
-        url = create_url(query = query, id = id)
-        params = parameters(query = query)
-        r = connect_endpoint(url, params = params)
+        url = self.create_url(query = query, id = id)
+        params = self.parameters(query = query)
+        r = self.connect_endpoint(url, params = params)
         return r 
 
 
 
 
-    def get_final(id="276332668"):
+    def get_final(self, id="276332668"):
         """
         Calls all endpoints and extracts the data of interest from the returned query
 
@@ -139,9 +139,9 @@ class get_posts:
         A dictionary of tweets, dates of the tweet, likes and impression counts, and the images associated with the tweets
 
         """
-        r = get_data(query = 'lst', id = id)
+        r = self.get_data(query = 'lst', id = id)
         list_id = [x['id'] for x in r['data'] if x['name'] == "Fashion"][0]
-        r = get_data(query = 'brands', id = list_id)
+        r = self.get_data(query = 'brands', id = list_id)
         brand_id = [x['id'] for x in r['data']]
         brands = [x['name'] for x in r['data']]
 
@@ -152,7 +152,7 @@ class get_posts:
 
         for key, ID in zip(timeline.keys(), brand_id):
 
-            tweets = get_data(query = 'posts', id = ID)
+            tweets = self.get_data(query = 'posts', id = ID)
 
 
             timeline[key]['text'].append([x['text'] for x in tweets['data']])
@@ -168,7 +168,7 @@ class get_posts:
 
 
 
-    def get_metrics(dic = 'dic'):
+    def get_metrics(self, dic = 'dic'):
         """
         Generates an index of tweets which are most relevant based on popularity which is based on just likes or 
         likes and impression count
@@ -222,7 +222,7 @@ class get_posts:
 
 
 
-    def clean_data(id="276332668"):
+    def clean_data(self, id="276332668"):
         """
         Cleans the tweets for weird characters
 
@@ -248,7 +248,7 @@ class get_posts:
         return dic
 
 
-    def gather_data(pop = 'popoular', id = id):
+    def gather_data(self, pop = 'popoular', id = id):
         """
         Gathers the data, indexes the list based on filtering method of choice, 
         and prints the recent tweets so one may avoid the depths of their social media timeline. 
@@ -263,8 +263,8 @@ class get_posts:
         Prints the text and date of the most recent tweets with any included links.  
 
         """
-        dic = clean_data(id)
-        index = get_metrics(dic)
+        dic = self.clean_data(id)
+        index = self.get_metrics(dic)
         if pop == 'popular':
             for key in dic.keys():
                 for i in range(len(index[key])):
@@ -280,9 +280,9 @@ class get_posts:
 
 
 
-    def get_images(id = 'id'):
+    def get_images(self, id = 'id'):
         img_dic = {}
-        dic = get_final()
+        dic = self.get_final()
         for key in dic.keys():
             print(dic[key])
             img_dic[key] = [x for x in dic[key]['img']]
@@ -293,13 +293,6 @@ class get_posts:
 
 
 
-    def main():
-        '''
-        Call the get_images function which will save a dataframe of the image files to the directory 
-        which can then be used by the image classifier once it exists
-        '''
-
-        get_images()
 
 
     
