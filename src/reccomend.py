@@ -15,12 +15,12 @@ class reccomend:
         self.similar = []
         self.diff = []
         
-    def load_data():
+    def load_data(self):
         adj_df = pd.read_csv('classified.csv')
         wardrobe = pd.read_csv('wardrobe.csv')
         return adj_df, wardrobe
         
-    def build_network(adj_df):
+    def build_network(self, adj_df):
         '''
         Intake pandas df of adjacency matrix from image classifier and outputs symetric normalized covariance matrix of clothing items 
         elements at index [i,j] are the conditional probability of two clothing items being styled together in the same image 
@@ -48,7 +48,7 @@ class reccomend:
 
 
         mat_dot = np.dot(adj_m, adj_m_t)
-        num_photos = np.count_nonzero(adj_m, axis=0) #get number of photos which the article of clothing is styled in
+        num_photos = np.count_nonzero(adj_m, axis=1) #get number of photos which the article of clothing is styled in
 
 
         #normalize matrix
@@ -78,7 +78,7 @@ class reccomend:
         return network, pieces
     
     
-     def categorize_pieces(pieces):
+     def categorize_pieces(self, pieces):
         '''
         
         Parses each article description and creates a dictionary linking the attribute(color, type) to the article ID. 
@@ -103,7 +103,7 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(network, wardrobe):
+    def score_wardrobe(self, network, wardrobe):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -121,13 +121,13 @@ class reccomend:
         '''
        
         #Need function here to intake and categorize wardrobe data. 
-        adj_df, wardrobe = load_data()
-        graph, pieces = build_network(adj_df)
+        adj_df, wardrobe = self.load_data()
+        graph, pieces = self.build_network(adj_df)
         wardrobe_index = [pieces.index(x) for x in wardrobe]
         wardrobe_graph = graph[:, wardrobe_index]
-        similar = similarity(graph, wardrobe_graph, pieces)
-        diff = difference(graph, wardrobe_graph, pieces)
-        optimal = similar * diff
+        similar = self.similarity(graph, wardrobe_graph, pieces)
+        diff = self.difference(graph, wardrobe_graph, pieces)
+        optimal = [x * y for x, y in zip(similar, diff)]
         
         for score, item in zip(optimal, pieces):
             self.scores[item] = score
@@ -140,7 +140,7 @@ class reccomend:
             
             
 
-    def similarity(graph, wardrobe_graph, pieces):
+    def similarity(self, graph, wardrobe_graph, pieces):
         '''
         Compute metrics of relatedness between all possible items and the users wardrobe by subsetting the network matrix 
         to calculate density between users current wardobe and all possible items
@@ -189,8 +189,8 @@ class reccomend:
         
         for i in range(len(pieces)):
             neighbors_i = graph[i, :] > 0 #get all the neighbors of item i 
-            neighbors_w = wardrobe_graph.sum(axis = 0) > 0 #get all the neighbors of wardrobe 
-            item_diff = graph[neighbors_i, neighbors_w].sum()
+            neighbors_w = wardrobe_graph.sum(axis = 1) > 0 #get all the neighbors of wardrobe 
+            item_diff = graph[neighbors_i, :][:, neighbors_w].sum()
             item_total_diff = graph[neighbors_i, :].sum()
             if item_total_diff > 0:
                 neighbor_prox = item_diff/item_total_diff
