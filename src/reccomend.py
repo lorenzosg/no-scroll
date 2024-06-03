@@ -130,7 +130,9 @@ class reccomend:
         optimal = [x * y for x, y in zip(similar, diff)]
         
         for score, item in zip(optimal, pieces):
-            self.scores[item] = score
+            if item not in wardrobe:
+                self.scores[item] = score
+            
         
         sort_scores = sorted(score.items(), key=lambda x:x[1], reverse = True)
         self.scores = dict(sort_scores)
