@@ -103,7 +103,7 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(self, network, wardrobe):
+    def score_wardrobe(self, network, optimal = True):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -113,6 +113,8 @@ class reccomend:
         Parameters
         ----------
         network: pandas dataframe of adjacency matrix of how often clothing items are styled in X posts 
+        optimal: if True, specialization and relatedness scores will be multiplied to get optimal score, otherwise
+        similarity scores will be used. This is for purposes of testing and comparison in 'test_recs'. 
 
         Returns
         -------
@@ -127,7 +129,10 @@ class reccomend:
         wardrobe_graph = graph[:, wardrobe_index]
         similar = self.similarity(graph, wardrobe_graph, pieces)
         diff = self.difference(graph, wardrobe_graph, pieces)
-        optimal = [x * y for x, y in zip(similar, diff)]
+        if optimal == True:
+            optimal = [x * y for x, y in zip(similar, diff)]
+        else: 
+            optimal = similar
         
         for score, item in zip(optimal, pieces):
             if item not in wardrobe:
