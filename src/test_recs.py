@@ -11,7 +11,7 @@ Class test_recs:
     
     
     def pruchase(self, n, method == 'static'):
-        wardrobe = load_data()[1]
+        adj_df, wardrobe = load_data()
         recs = reccomend.score_wardrobe()
         recs_list = list(recs.keys())
         if method == static:
@@ -22,15 +22,23 @@ Class test_recs:
                 recs = reccomend.score_wardrobe(wardrobe = wardrobe)
                 recs_list = list(recs.keys())
                 
-        return wardrobe
+        return wardrobe, adj_df
                 
         
         
     def complete_fits(self, outfits):
+        new_wardrobe, adj_df = pruchase(10, method == 'static')
+        num_fits = 0
+        for outfit in adj_df.columns:
+            fit = adj_df.loc[:, outfit] > 0
+            fit_names = [x for x, y in zip(fit.index, fit.values) if y == True]
+            is_whole = set(new_wardrobe) & set(fit_names)
+            if len(is_whole) == len(fit_names):
+                num_fits += 1
         
-        
-        #run through all columns of the outfits matrix and see how many of them are fully present in the aquired clothing. 
-         
+        return num_fits/len(adj_df.columns)
+              
+ 
     
     def distributed(self):
         #Go through edges in new wardrobe graph and plot the distribution of how related all items are
