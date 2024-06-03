@@ -1,0 +1,30 @@
+#Class for taking each reccommended item and showing which items it is most often styled with and generate images of how it is styled. 
+
+
+
+Class fits:
+    
+    
+    def __init__(self):
+        
+        
+    def get_neighbs(article):
+        #take each reccomended item and get the items which are most related to the item. 
+        (maybe have feature where the function is executed only if the user clicks on the rec) 
+        #return a list of those items
+        
+    def get_images(img_num):
+        #take the index of the column which corresponds to the image which the item was styled in from my_closet
+        #fetch and return the image which it was styled in 
+        #will be called by function 'my_closet'
+        
+    
+    def my_closet():
+        #subset output from get_neighbs to get only the relatedness of reccomended items with user's current wardrobe
+        #get the items which they are styled with. 
+        #get the set of items which they are styled with that are also in the user's wardrobe
+        #return an brief summary of how often they are styled with certain items the user has and return photos to go along with            it. 
+        
+    def optimize_fit():
+        #if there is a fit which the user can already complete by purchasing the singular item return a description and image of            the fit or fits
+        #if there isn't calculate which other items are most optimal by calculating if the user were to purchase those other                items, what would be the gain in overall optimality with other items. Or just simply the items which are already most              optimal with the current item. 
