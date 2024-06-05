@@ -7,7 +7,7 @@ class test_recs:
     
     
     def __init__(self):
-    
+        self.rec_instance = rec.reccomend()
     
     def purchase(self, n, wardrobe = 'wardrobe', method == 'static', optimal = True):
         recs = rec.score_wardrobe(optimal = optimal)
