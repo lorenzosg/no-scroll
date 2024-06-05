@@ -16,13 +16,20 @@ class reccomend:
         self.diff = []
         
     def load_data(self):
-        adj_df = pd.read_csv('classified.csv')
-        wardrobe = pd.read_csv('wardrobe.csv')
+        adj_df = pd.read_csv('/Users/lorenzogiamartino/Desktop/no-scroll/no-scroll/data/classified.csv', index_col = 0)
+        adj_df = adj_df.iloc[:, 1:]
+        wardrobe_df = pd.read_csv('/Users/lorenzogiamartino/Desktop/no-scroll/no-scroll/data/wardrobe.csv', index_col = 0)
+        wardrobe_df = wardrobe_df.iloc[:, 1:]
+        wardrobe = list(pd.unique(wardrobe_df.index))
+        
+        #print(adj_df.index)
+        #print(wardrobe_df)
+        
         return adj_df, wardrobe
         
     def build_network(self, adj_df):
         '''
-        Intake pandas df of adjacency matrix from image classifier and outputs symetric normalized covariance matrix of clothing items 
+        Intake pandas df of adjacency matrix from image classifier and outputs symetric normalized covariance matrix of                 clothing items 
         elements at index [i,j] are the conditional probability of two clothing items being styled together in the same image 
         
         Parameters
@@ -78,9 +85,9 @@ class reccomend:
         return network, pieces
     
     
-     def categorize_pieces(self, pieces):
+    def categorize_pieces(self, pieces):
+       
         '''
-        
         Parses each article description and creates a dictionary linking the attribute(color, type) to the article ID. 
         
         Parameters
@@ -92,12 +99,12 @@ class reccomend:
         -------
         A dictionary of each clothing attribute(keys) and a list of all the clothing articles which have the arribute. 
 
-
         '''
+        
         pieces_dict = {}
         for i, piece in enumerate(pieces):
             attributes = pieces.split('_')
-            fot att in attributes: 
+            for att in attributes: 
                 pieces_dict[att] += [i]
                 
         return pieces_dict
