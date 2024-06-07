@@ -46,12 +46,15 @@ class reccomend:
         '''
         
         
-        pieces = list(adj_df.columns)
+        pieces = list(adj_df.index)
         adj_m = adj_df.to_numpy()
+        
         
 
         adj_m = adj_m
-        adj_m_t = adj_m.transpose
+        adj_m_t = adj_m.transpose()
+        
+        
 
 
         mat_dot = np.dot(adj_m, adj_m_t)
@@ -110,7 +113,7 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(self, network, optimal = True):
+    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', optimal = True, testing = True):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -130,7 +133,9 @@ class reccomend:
         '''
        
         #Need function here to intake and categorize wardrobe data. 
-        adj_df, wardrobe = self.load_data()
+        if testing == False:
+            adj_df, wardrobe = self.load_data()
+        print(wardrobe)
         graph, pieces = self.build_network(adj_df)
         wardrobe_index = [pieces.index(x) for x in wardrobe]
         wardrobe_graph = graph[:, wardrobe_index]
@@ -146,7 +151,7 @@ class reccomend:
                 self.scores[item] = score
             
         
-        sort_scores = sorted(score.items(), key=lambda x:x[1], reverse = True)
+        sort_scores = sorted(self.scores.items(), key=lambda x:x[1], reverse = True)
         self.scores = dict(sort_scores)
         
             
@@ -184,7 +189,7 @@ class reccomend:
         return self.similar
             
 
-    def difference(graph, wardrobe_graph, pieces):
+    def difference(self, graph, wardrobe_graph, pieces):
         '''
         Compute metrics of differentiation between all possible items and the users wardrobe by subsetting the network matrix 
         to calculate density between users current wardobe and all possible items
@@ -211,13 +216,13 @@ class reccomend:
             else:
                 neighbor_prox = 0
             
-            self.diff.append(neighbor_approx)
+            self.diff.append(neighbor_prox)
         
         return self.diff
             
 
 
-    def generate_recs(optimal, images):
+    def generate_recs(self, optimal, images):
         
         '''
         Organize optimal purchases into a matrix to be displayd on main page 
