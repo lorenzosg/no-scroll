@@ -22,8 +22,6 @@ class reccomend:
         wardrobe_df = wardrobe_df.iloc[:, 1:]
         wardrobe = list(pd.unique(wardrobe_df.index))
         
-        #print(adj_df.index)
-        #print(wardrobe_df)
         
         return adj_df, wardrobe
         
@@ -55,7 +53,6 @@ class reccomend:
         adj_m_t = adj_m.transpose()
         
         
-
 
         mat_dot = np.dot(adj_m, adj_m_t)
         num_photos = np.count_nonzero(adj_m, axis=1) #get number of photos which the article of clothing is styled in
@@ -113,7 +110,7 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', optimal = True, testing = True):
+    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, testing = True, only_new = True):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -135,27 +132,31 @@ class reccomend:
         #Need function here to intake and categorize wardrobe data. 
         if testing == False:
             adj_df, wardrobe = self.load_data()
-        print(wardrobe)
         graph, pieces = self.build_network(adj_df)
         wardrobe_index = [pieces.index(x) for x in wardrobe]
         wardrobe_graph = graph[:, wardrobe_index]
         similar = self.similarity(graph, wardrobe_graph, pieces)
         diff = self.difference(graph, wardrobe_graph, pieces)
-        if optimal == True:
+        if efficient == True:
             optimal = [x * y for x, y in zip(similar, diff)]
         else: 
-            optimal = similar
+            optimal = similar[:]
         
+        scores = {}
         for score, item in zip(optimal, pieces):
-            if item not in wardrobe:
-                self.scores[item] = score
+            if only_new == True: 
+                if item not in wardrobe:
+                    scores[item] = score
+                    
+            else:
+                scores[item] = score
             
         
-        sort_scores = sorted(self.scores.items(), key=lambda x:x[1], reverse = True)
-        self.scores = dict(sort_scores)
+        sort_scores = sorted(scores.items(), key=lambda x:x[1], reverse = True)
+        dict_scores = dict(sort_scores)
         
             
-        return self.scores 
+        return dict_scores 
             
             
 
@@ -175,7 +176,7 @@ class reccomend:
         A list of similarity scores        
 
         '''
-        
+        similar = []
         for i, item in enumerate(pieces):
             item_prox = wardrobe_graph[i, :].sum()
             item_total_prox = graph[i, :].sum()
@@ -184,9 +185,9 @@ class reccomend:
             else:
                 wardrobe_prox = 0 
             
-            self.similar.append(wardrobe_prox)
+            similar.append(wardrobe_prox)
         
-        return self.similar
+        return similar
             
 
     def difference(self, graph, wardrobe_graph, pieces):
@@ -205,10 +206,10 @@ class reccomend:
         A list of differentation scores     
 
         '''
-        
+        diff = []
         for i in range(len(pieces)):
-            neighbors_i = graph[i, :] > 0 #get all the neighbors of item i 
-            neighbors_w = wardrobe_graph.sum(axis = 1) > 0 #get all the neighbors of wardrobe 
+            neighbors_i = graph[i, :] > 0 
+            neighbors_w = wardrobe_graph.sum(axis = 1) > 0 
             item_diff = graph[neighbors_i, :][:, neighbors_w].sum()
             item_total_diff = graph[neighbors_i, :].sum()
             if item_total_diff > 0:
@@ -216,9 +217,9 @@ class reccomend:
             else:
                 neighbor_prox = 0
             
-            self.diff.append(neighbor_prox)
+            diff.append(neighbor_prox)
         
-        return self.diff
+        return diff
             
 
 
