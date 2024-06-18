@@ -110,7 +110,7 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, testing = True, only_new = True):
+    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, testing = True, only_new = True, long = True):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -134,9 +134,13 @@ class reccomend:
             adj_df, wardrobe = self.load_data()
         graph, pieces = self.build_network(adj_df)
         wardrobe_index = [pieces.index(x) for x in wardrobe]
-        wardrobe_graph = graph[:, wardrobe_index]
-        similar = self.similarity(graph, wardrobe_graph, pieces)
-        diff = self.difference(graph, wardrobe_graph, pieces)
+        if long == False: 
+            wardrobe_graph = graph[:, wardrobe_index]
+            similar = self.similarity(graph, wardrobe_graph, pieces)
+            diff = self.difference(graph, wardrobe_graph, pieces)
+        else: 
+            similar = self.long_similarity(graph, wardrobe_index, pieces)
+            diff = self.long_difference(graph, wardrobe_index, pieces)
         if efficient == True:
             optimal = [x * y for x, y in zip(similar, diff)]
         else: 
@@ -221,6 +225,40 @@ class reccomend:
         
         return diff
             
+        
+    def long_similarity(self, graph, wardrobe_index, pieces):
+        total_prox = []
+        for i in range(len(pieces)):
+            prox = []
+            piece_prox = graph[i,:] #get the relatedness of that piece with all pieces 
+            for j in range(len(wardrobe_index)):
+                item_total_prox = graph[:, j].sum() #get the realtedness of the wardrobe item 
+                item_prox = piece_prox[j]
+                prox.append(item_prox/item_total_prox)
+                
+            total_prox.append(np.mean(prox))
+            
+        return total_prox
+    
+    
+    def long_difference(self, graph, wardrobe_index, pieces):
+        sum_diff = []
+        for i in range(len(pieces)):
+            diff = []
+            piece_bool = graph[i,:] > 0 #get all neighbors of piece 
+            indexed = graph[piece_bool, :] #get the relatedness of the neighbors with all other pieces 
+            for j in range(len(wardrobe_index)):
+                wardrobe_bool = graph[:, j] > 0 #get the neighbors of each item of the wardrobe 
+                item_diff = indexed[:, wardrobe_bool].sum() #get the realtedness between the wardrobes neighbors and the piece 
+                total_diff = graph[:, wardrobe_bool].sum() #get the relatedness of the wardrobe item with all other items. 
+                
+                diff.append(item_diff/total_diff)
+            
+            sum_diff.append(np.mean(diff))
+                
+        return sum_diff
+    
+    
 
 
     def generate_recs(self, optimal, images):

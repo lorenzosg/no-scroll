@@ -9,21 +9,19 @@ class test_recs:
     def __init__(self):
         self.rec_instance = rec.reccomend()
     
-    def static_purchase(self, wardrobe = 'wardrobe', efficient = True, only_new = True):
-        recs = self.rec_instance.score_wardrobe(efficient = efficient, testing = False, only_new = only_new)
+    def static_purchase(self, wardrobe = 'wardrobe', efficient = True, only_new = True, long = False):
+        recs = self.rec_instance.score_wardrobe(efficient = efficient, testing = False, only_new = only_new, long = long)
         recs_list = list(recs.keys()) 
         
         return wardrobe[:], recs_list
             
-    def dynamic_purchase(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, only_new = True):
-        recs = self.rec_instance.score_wardrobe(wardrobe, adj_df, efficient = efficient, testing = True, only_new = only_new)
+    def dynamic_purchase(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, only_new = True, long = False):
+        recs = self.rec_instance.score_wardrobe(wardrobe, adj_df, efficient = efficient, testing = True, only_new = only_new, long = long)
         recs_list = list(recs.keys()) 
-        print(recs_list)
         wardrobe.append(recs_list[0])
         
         return wardrobe, recs_list
                 
-        
         
         
     def complete_fits(self, adj_df = 'adj_df', wardrobe = 'wardrobe'):
@@ -72,17 +70,15 @@ class test_recs:
         return freq_dict2
                 
             
-
      
-     
-    def get_results(self, efficient = True, only_new = True):
+    def get_results(self, efficient = True, only_new = True, long = False):
         adj_df, wardrobe = self.rec_instance.load_data()
         n = len(adj_df.index) - len(wardrobe) - 1
         fits_dict = {}
         
         fits_static = [] 
         edges_static = []
-        static_wardrobe, recs_list = self.static_purchase(wardrobe, efficient, only_new)
+        static_wardrobe, recs_list = self.static_purchase(wardrobe, efficient, only_new, long)
         
         for i in range(n):
             if recs_list[i] == 0:
@@ -105,9 +101,10 @@ class test_recs:
         fits_dynamic = []
         edges_dynamic = []
         for i in range(n):
-            wardrobe, recs_list = self.dynamic_purchase(wardrobe, adj_df, efficient, only_new)
+            wardrobe, recs_list = self.dynamic_purchase(wardrobe, adj_df, efficient, only_new, long)
             if recs_list[0] == 0:
                 break
+            print(recs_list)
             percent_complete = self.complete_fits(adj_df, wardrobe)
             dist_dynamic = self.distributed(adj_df, wardrobe)
             fits_dynamic.append(percent_complete) 
@@ -122,13 +119,7 @@ class test_recs:
         
         
      
-                
-                
-        #I want to go through and simulate purchases for n+1 till there are no further reccomendations. 
-        
-        #the problem appears to be that the recs_list isn't updating. It shouldn't include items which already exist in the wardrobe. 
-        
-        
+ 
         
          
         
