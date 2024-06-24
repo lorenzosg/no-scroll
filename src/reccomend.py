@@ -137,6 +137,7 @@ class reccomend:
         if long == False: 
             wardrobe_graph = graph[:, wardrobe_index]
             similar = self.similarity(graph, wardrobe_graph, pieces)
+            #include if statement where if they have no similarity don't bother with diff calc. 
             diff = self.difference(graph, wardrobe_graph, pieces)
         else: 
             similar = self.long_similarity(graph, wardrobe_index, pieces)
@@ -228,7 +229,8 @@ class reccomend:
         
     def long_similarity(self, graph, wardrobe_index, pieces):
         total_prox = []
-        for i in range(len(pieces)):
+        pieces_index = [pieces.index(x) for x in pieces]
+        for i in pieces_index:
             prox = []
             piece_prox = graph[i,:] #get the relatedness of that piece with all pieces 
             for j in range(len(wardrobe_index)):
@@ -242,21 +244,69 @@ class reccomend:
     
     
     def long_difference(self, graph, wardrobe_index, pieces):
-        sum_diff = []
-        for i in range(len(pieces)):
-            diff = []
+        diff = []
+        all_items = set()
+        wardrobe = set()
+        pieces_index = [pieces.index(x) for x in pieces]
+        for i in pieces_index:
             piece_bool = graph[i,:] > 0 #get all neighbors of piece 
-            indexed = graph[piece_bool, :] #get the relatedness of the neighbors with all other pieces 
+            piece_index = [i for i, x in zip(range(len(piece_bool_bool)), piece_bool) if x == True]
+            all_items = [all_items.add(piece) for piece in war_index if piece not in all_items]
+            baby_diff = []
+            
             for j in range(len(wardrobe_index)):
                 wardrobe_bool = graph[:, j] > 0 #get the neighbors of each item of the wardrobe 
-                item_diff = indexed[:, wardrobe_bool].sum() #get the realtedness between the wardrobes neighbors and the piece 
-                total_diff = graph[:, wardrobe_bool].sum() #get the relatedness of the wardrobe item with all other items. 
-                
-                diff.append(item_diff/total_diff)
+                war_index = [i for i, x in zip(range(len(wardrobe_bool)), wardrobe_bool) if x == True]
+                wardrobe = [wardrobe.add(piece) for piece in war_index if piece not in wardrobe]
+                prox_btwn_neighbs = np.mean([graph[x, y]/graph[x:].sum() for x in war_index for y in piece_index])
+                baby_diff.append(prox_btwn_neighbs) 
             
-            sum_diff.append(np.mean(diff))
+            diff.append(np.mean(baby_diff))
+               
                 
-        return sum_diff
+        return diff, all_items, wardrobe
+    
+    #I think I may want to take the relatedness between each pair of neighbors, because we aren't able to capture the density of     each item if the denominator is comprised of the relatedness with multiple items. Some items will 
+    
+    
+    def score_iterate(self, adj_df, graph, neighbors_1, neighbors2, iterations = 3):
+       
+        graph, pieces = self.build_network(adj_df)
+        wardrobe_index = [pieces.index(x) for x in wardrobe]
+        sim = []
+        difference = []
+        for iteration in iterations: 
+            similar = self.long_similarity(graph, neighbors_1, neighbors_2)
+            sim.append(similar)
+            diff, neighbors1, neighbors2, = self.long_difference(graph, neighbors_1, neighbors_2) 
+            difference.append(diff)
+            
+            optimal = [x * y for x,y in zip(sim, difference)]
+
+        
+        
+        
+        
+        
+        #here I need to spit out the index of these neighbors and save them as neighbors 1 and neighbors 2. 
+        
+        
+        #for each possible clothing item and each wardrobe item, get their similarity. 
+        #next for each one where they have greater than 0 similarity, get the relatedness between common neighbors, which will be weighted by the density of the neighbors which they have in common, until there are no more neighbors in common. 
+        #it's an iterative weighting of the density of neighbors by the next level of neighbors. 
+        
+        #Or it's an average at each stage. 
+        
+        #the intuition is that if two items are both closely related and their neighbors share strong ties with many of their neighbors, and their neighbors neighbors
+        
+        #if an item is added to the wardrobe that has strong relatedness with the wardrobe, and also has strong ties with the neighbors then it is both similar to what they wear and complimentary/differentiated. 
+        #and if the neighbors of the neighbors of the items in the wardrobe are also strongly related then the item which has the highest score is one which is most likely to create the greatest number of outfits as other items are added. 
+        
+        
+        #across all items in the wardrobe which pieces are most often styled with the wardrobe, and the items which they are styled with (neighbors) are most often styled with each other. The highest score indicates a high likelihood of completing outfits. 
+        #Now if the neighbors, which are the compliments to the related pieces, are also highly related, and their neighbors are highly related, then it would seem to make sense that this would indicate or measure the potential for creating a greater number of outfits between these neighbors, as well. Because the addition of an item with a high score would become most closely realted to all possible outfits in some way. 
+        
+        pass 
     
     
 
