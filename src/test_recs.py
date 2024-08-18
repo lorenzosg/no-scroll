@@ -88,8 +88,8 @@ class test_recs:
 
            # print(len(wardrobe))
             percent_complete = self.complete_fits(adj_df, static_wardrobe)
-            dist_static = self.distributed(adj_df, static_wardrobe)
             fits_static.append(percent_complete)
+            dist_static = self.distributed(adj_df, static_wardrobe)
             edges_static.append(dist_static)
             freq_static = self.num_items(static_wardrobe)
         
