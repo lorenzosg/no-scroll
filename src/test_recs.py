@@ -80,7 +80,7 @@ class test_recs:
         edges_static = []
         static_wardrobe, recs_list = self.static_purchase(wardrobe, efficient, only_new, long)
         
-        for i in range(n):
+        for i in range(n): #not sure why I can't just run through the whole recs_list here. Not sure why I need to calculate how many recs there are. Maybe change. 
             if recs_list[i] == 0:
                 break
         

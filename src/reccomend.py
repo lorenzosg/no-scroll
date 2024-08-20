@@ -129,12 +129,12 @@ class reccomend:
         A sorted dictionary in decreasing order with article ID's as keys and optimal purchase values as values. 
 
         '''
-       
+        
         #Need function here to intake and categorize wardrobe data. 
         if testing == False:
             adj_df, wardrobe = self.load_data()
         graph, pieces = self.build_network(adj_df)
-        wardrobe_index = [pieces.index(x) for x in wardrobe]
+        wardrobe_index = [x for x in pieces if x in wardrobe]
         pieces_index = range(len(pieces))
         if long == False: 
             wardrobe_graph = graph[:, wardrobe_index]
