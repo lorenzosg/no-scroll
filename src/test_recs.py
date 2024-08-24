@@ -9,14 +9,14 @@ class test_recs:
     def __init__(self):
         self.rec_instance = rec.reccomend()
     
-    def static_purchase(self, wardrobe = 'wardrobe', efficient = True, only_new = True, long = False):
-        recs = self.rec_instance.score_wardrobe(efficient = efficient, testing = False, only_new = only_new, long = long)
+    def static_purchase(self, wardrobe, adj_df, only_new, iterations):
+        recs = self.rec_instance.score_wardrobe(wardrobe, adj_df, only_new, iterations)
         recs_list = list(recs.keys()) 
         
-        return wardrobe[:], recs_list
+        return recs_list
             
-    def dynamic_purchase(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, only_new = True, long = False):
-        recs = self.rec_instance.score_wardrobe(wardrobe, adj_df, efficient = efficient, testing = True, only_new = only_new, long = long)
+    def dynamic_purchase(self, wardrobe, adj_df, only_new, iterations):
+        recs = self.rec_instance.score_wardrobe(wardrobe, adj_df, only_new, iterations)
         recs_list = list(recs.keys()) 
         wardrobe.append(recs_list[0])
         
@@ -24,7 +24,7 @@ class test_recs:
                 
         
         
-    def complete_fits(self, adj_df = 'adj_df', wardrobe = 'wardrobe'):
+    def complete_fits(self, adj_df, wardrobe):
         num_fits = 0
         for outfit in adj_df.columns:
             fit = adj_df.loc[:, outfit] > 0
@@ -37,22 +37,35 @@ class test_recs:
               
  
     
-    def distributed(self, adj_df = 'adj_df', wardrobe = 'wardrobe'):
+    def get_links(self, adj_df, wardrobe):
         graph, pieces = self.rec_instance.build_network(adj_df)
         all_edges = []
         for i, item in enumerate(wardrobe):
             
-            wardrobe_copy = wardrobe[:]
+            wardrobe_copy = wardrobe[:] #creating shallow copy so that we don't change the index of the loop inside the loop. 
             piece = wardrobe_copy.pop(i)
             wardrobe_index = [pieces.index(x) for x in wardrobe_copy]
             piece_index = pieces.index(piece)
-            edges = graph[piece_index, wardrobe_index]
+            edges = graph[piece_index, wardrobe_index] #getting all edges between the most recent addition to the wardrobe and all previous wardobe items. We can observe the distribution of all edges between new pieces and previously owned wardrobe items
             all_edges.extend(edges)
             
         return all_edges
     
     
     def num_items(self, wardrobe):
+        
+        '''
+        Intakes the reccomended wardobe and counts the number of times an item occurs, then counts the number of times an item           has occured for every number of times an item has occured. 
+        
+        Parameters
+        ----------
+        wardobe: a list of clothing article descriptions for each wardrobe item 
+
+        Returns
+        -------
+        A dictionary of how many times items have occured, and how many times items have occured these number of times across all items
+        
+        '''
         freq_dict = {}
         for item in wardrobe:
             if item in freq_dict.keys(): 
@@ -71,14 +84,14 @@ class test_recs:
                 
             
      
-    def get_results(self, efficient = True, only_new = True, long = False):
+    def get_results(self, iterations, only_new = True):
         adj_df, wardrobe = self.rec_instance.load_data()
         n = len(adj_df.index) - len(wardrobe) - 1
         fits_dict = {}
         
         fits_static = [] 
         edges_static = []
-        static_wardrobe, recs_list = self.static_purchase(wardrobe, efficient, only_new, long)
+        recs_list = self.static_purchase(wardrobe, adj_df, only_new, iterations)
         
         for i in range(n): #not sure why I can't just run through the whole recs_list here. Not sure why I need to calculate how many recs there are. Maybe change. 
             if recs_list[i] == 0:
@@ -89,7 +102,7 @@ class test_recs:
            # print(len(wardrobe))
             percent_complete = self.complete_fits(adj_df, static_wardrobe)
             fits_static.append(percent_complete)
-            dist_static = self.distributed(adj_df, static_wardrobe)
+            dist_static = self.get_links(adj_df, static_wardrobe)
             edges_static.append(dist_static)
             freq_static = self.num_items(static_wardrobe)
         
@@ -101,12 +114,12 @@ class test_recs:
         fits_dynamic = []
         edges_dynamic = []
         for i in range(n):
-            wardrobe, recs_list = self.dynamic_purchase(wardrobe, adj_df, efficient, only_new, long)
+            wardrobe, recs_list = self.dynamic_purchase(wardrobe, adj_df, only_new, iterations)
             if recs_list[0] == 0:
                 break
             print(recs_list)
             percent_complete = self.complete_fits(adj_df, wardrobe)
-            dist_dynamic = self.distributed(adj_df, wardrobe)
+            dist_dynamic = self.get_links(adj_df, wardrobe)
             fits_dynamic.append(percent_complete) 
             edges_dynamic.append(dist_dynamic)
             freq_dynamic = self.num_items(wardrobe)

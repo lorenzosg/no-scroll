@@ -111,7 +111,27 @@ class reccomend:
         return pieces_dict
     
     
-    def score_wardrobe(self, wardrobe = 'wardrobe', adj_df = 'adj_df', efficient = True, testing = True, only_new = True, long = True, iterations = 3):
+    def return_pieces(self, optimal, pieces, wardrobe, only_new = True):
+        scores = {}
+        
+        
+        for score, item in zip(optimal, pieces):
+            if only_new == True: 
+                if item not in wardrobe:
+                    scores[item] = score
+                    
+            else:
+                scores[item] = score
+            
+        
+        sort_scores = sorted(scores.items(), key=lambda x:x[1], reverse = True)
+        dict_scores = dict(sort_scores)
+        
+            
+        return dict_scores
+    
+    
+    def score_wardrobe(self, wardrobe, adj_df, only_new, iterations, method, standard = False, key = 'opt'):
         
         '''
         Intake network in numpy array form of clothing article options and list of wardrobe items from user 
@@ -131,51 +151,24 @@ class reccomend:
         '''
         
         #Need function here to intake and categorize wardrobe data. 
-        if testing == False:
-            adj_df, wardrobe = self.load_data()
+        dictionary = {}
         graph, pieces = self.build_network(adj_df)
-        wardrobe_index = [x for x in pieces if x in wardrobe]
+        wardrobe_index = [pieces.index(x) for x in pieces if x in wardrobe]
         pieces_index = range(len(pieces))
-        if long == False: 
-            wardrobe_graph = graph[:, wardrobe_index]
-            similar = self.similarity(graph, wardrobe_graph, pieces)
-            #include if statement where if they have no similarity don't bother with diff calc. 
-            diff = self.difference(graph, wardrobe_graph, pieces)
-        else: 
-            dic_iter = {}
-            mast_dict = {}
-            print(pieces)
-            results = self.long_difference(mast_dict, dic_iter, graph, wardrobe_index, pieces_index, index = 0, iterations = 3)
-            print(results)
-            optimal = results['optimal_'+str(iterations)]
-            print(optimal)
+        if standard == False:
+            scores_dict = self.long_diff(dictionary, graph, pieces_index, wardrobe_index, iterations)
+            optimal = scores_dict[key]
+        elif standard == True:
+            scores_dict = self.standard_scoring(graph, pieces_index, wardrobe_index, method)
+            optimal = scores_dict[key]
             
-            #similar = self.long_similarity(graph, wardrobe_index, pieces)
-            #diff = self.long_difference(graph, wardrobe_index, pieces)
-       # if efficient == True:
-            #optimal = [x * y for x, y in zip(similar, diff)]
-        #else: 
-            #optimal = similar[:]
+        scores = self.return_pieces(optimal, pieces, wardrobe, only_new)
         
-        scores = {}
-        for score, item in zip(optimal, pieces):
-            if only_new == True: 
-                if item not in wardrobe:
-                    scores[item] = score
-                    
-            else:
-                scores[item] = score
-            
-        
-        sort_scores = sorted(scores.items(), key=lambda x:x[1], reverse = True)
-        dict_scores = dict(sort_scores)
+        return scores 
+    
         
             
-        return dict_scores, optimal
-            
-            
-
-    def similarity(self, graph, wardrobe_graph, pieces):
+    def similarity(self, graph, pieces_index, wardrobe_index):
         '''
         Compute metrics of relatedness between all possible items and the users wardrobe by subsetting the network matrix 
         to calculate density between users current wardobe and all possible items
@@ -191,8 +184,9 @@ class reccomend:
         A list of similarity scores        
 
         '''
+        wardrobe_graph = graph[:, wardrobe_index]
         similar = []
-        for i, item in enumerate(pieces):
+        for i in pieces_index:
             item_prox = wardrobe_graph[i, :].sum()
             item_total_prox = graph[i, :].sum()
             if item_total_prox > 0:
@@ -203,9 +197,36 @@ class reccomend:
             similar.append(wardrobe_prox)
         
         return similar
+    
+    
+    def long_difference(self, graph, pieces_index, wardrobe_index):
+        pieces_list = []
+        for i in pieces_index: 
+            piece_neighbs = graph[i, :] > 0 
+            piece_neighbs_index = [i for i, x in zip(range(len(piece_neighbs)), piece_neighbs) if x == True]
+            
+            total_diff = []
+            for j in wardrobe_index:
+                war_neighbs = graph[j, :] > 0 
+                war_neighbs_index = [i for i, x in zip(range(len(war_neighbs)), war_neighbs) if x == True]
+                
+                diff = []
+                for y in piece_neighbs_index:
+                    diff.append(np.mean([graph[x, y]/graph[x, :].sum() for x in war_neighbs_index]))
+                
+                total_diff.append(np.mean(diff))
+           
+            pieces_list.append(np.mean(total_diff))
+         
+        return pieces_list
+            
+        
+       
+                
+        
             
 
-    def difference(self, graph, wardrobe_graph, pieces):
+    def difference(self, graph, pieces_index, wardrobe_index):
         '''
         Compute metrics of differentiation between all possible items and the users wardrobe by subsetting the network matrix 
         to calculate density between users current wardobe and all possible items
@@ -221,12 +242,13 @@ class reccomend:
         A list of differentation scores     
 
         '''
+        wardrobe_graph = graph[:, wardrobe_index]
         diff = []
-        for i in range(len(pieces)):
+        for i in pieces_index:
             neighbors_i = graph[i, :] > 0 
-            neighbors_w = wardrobe_graph.sum(axis = 1) > 0 
-            item_diff = graph[neighbors_i, :][:, neighbors_w].sum()
-            item_total_diff = graph[neighbors_i, :].sum()
+            neighbors_w = wardrobe_graph.sum(axis = 1) > 0 #gets all pieces which are neighbors with any of the items in the wardrobe
+            item_diff = graph[neighbors_i, :][:, neighbors_w].sum() #get the prox between the neighbors of i and the wardrobe
+            item_total_diff = graph[neighbors_i, :].sum() #and the total prox between the peice and all others. 
             if item_total_diff > 0:
                 neighbor_prox = item_diff/item_total_diff
             else:
@@ -237,13 +259,12 @@ class reccomend:
         return diff
             
         
-    def long_similarity(self, graph, wardrobe_index, pieces):
+    def long_similarity(self, graph, pieces_index, wardrobe_index):
         total_prox = []
-        pieces_index = [pieces.index(x) for x in pieces]
         for i in pieces_index:
             prox = []
             piece_prox = graph[i,:] #get the relatedness of that piece with all pieces 
-            for j in range(len(wardrobe_index)):
+            for j in wardrobe_index:
                 item_total_prox = graph[:, j].sum() #get the realtedness of the wardrobe item 
                 item_prox = piece_prox[j]
                 prox.append(item_prox/item_total_prox)
@@ -252,31 +273,43 @@ class reccomend:
             
         return total_prox
     
+    
+    def standard_scoring(self, graph, pieces_index, wardrobe_index, method = 'long'):
+        
+        
+        if method == 'long':
+            similar = self.long_similarity(graph, pieces_index, wardrobe_index)
+            different = self.long_difference(graph, pieces_index, wardrobe_index)
+            
+        elif method == 'short':
+            similar = self.similarity(graph, pieces_index, wardrobe_index)
+            different = self.difference(graph, pieces_index, wardrobe_index)
+            print(f'elif statement in standard_scoring was executed')
+            
+        opt = [sim * diff for sim,diff in zip(similar, different)]
+        
+        scores = {'sim' : similar, 'diff': different, 'opt': opt}
+        
+        return scores
+                
+    
 
     
-    def dif_sim():
-        '''
-        Will take in an index of articles and
-        '''
-        
-        
     
-    
-    def long_diff(graph, pieces, wardrobe, counter, iterations):
+    def long_diff(self, dictionary, graph, pieces, wardrobe, iterations, counter = 0):
         key = 'round' + str(counter)
-        mast_dict[key] = []
-        pieces_lst = []
+        dictionary[key] = {'opt': [], 'sim': [], 'diff': []}
         for i in pieces: 
             if counter == iterations: 
                 piece_prox = graph[i, :] 
             piece_bool = graph[i,:] > 0 
             pieces_index = [i for i, x in zip(range(len(piece_bool)), piece_bool) if x == True]
 
-            if counter < iterations: 
-                war_key = 'round_' + str(counter) +"_war_" 
-                mast_dict[war_key] = []
+            #if counter < iterations: 
+            war_key = 'round_' + str(counter) +"_war_" 
+            dictionary[war_key] = {'war_sim': [], 'war_diff': [], 'war_opt': []}
+   
 
-            war_lst = []
             for j in wardrobe:
                 wardrobe_bool = graph[j,:] > 0
                 war_index = [i for i, x in zip(range(len(wardrobe_bool)), wardrobe_bool) if x == True]
@@ -284,28 +317,42 @@ class reccomend:
                     sim_num = piece_prox[j]
                     sim_denom = graph[:, j].sum()
                     item_prox = sim_num/sim_denom
-                    diff = np.mean([graph[x, y]/graph[x:].sum() for x in war_index for y in pieces_index])
-                    war_lst.append(item_prox * diff)
+                    dictionary[war_key]['war_sim'].append(item_prox)
+                    diff_y = []
+                    for y in pieces_index:
+                        diff_y.append(np.mean([graph[x, y]/graph[x, :].sum() for x in war_index for y in pieces_index]))
+                    diff = np.mean(diff_y)
+                    dictionary[war_key]['war_diff'].append(diff)
+                    dictionary[war_key]['war_opt'].append(item_prox * diff)
 
                 elif counter < iterations:
-                    long_diff(graph, pieces_index, war_index, counter + 1, iterations)
+                    self.long_diff(dictionary, graph, pieces_index, war_index, iterations, counter + 1)
 
             if counter == iterations:
-                pieces_lst.append(np.mean(war_lst))
+                dictionary[key]['opt'].append(np.mean(dictionary[war_key]['war_opt'])) 
+                dictionary[key]['sim'].append(np.mean(dictionary[war_key]['war_sim']))
+                dictionary[key]['diff'].append(np.mean(dictionary[war_key]['war_diff']))
 
 
             elif counter < iterations: 
                 war_key = 'round_' + str(counter) +"_war_"
-                pieces_lst.append(np.mean(mast_dict[war_key])) 
                 
-        loop_mean = np.mean(pieces_lst)
+                dictionary[key]['opt'].append(np.mean(dictionary[war_key]['war_opt'])) 
+                dictionary[key]['sim'].append(np.mean(dictionary[war_key]['war_sim']))
+                dictionary[key]['diff'].append(np.mean(dictionary[war_key]['war_diff']))
+                
+        opt_mean = np.mean(dictionary[key]['opt'])
+        sim_mean = np.mean(dictionary[key]['sim'])
+        diff_mean = np.mean(dictionary[key]['diff'])
 
         if counter > 0: 
             war_key = 'round_' + str(counter - 1) +"_war_" 
-            mast_dict[war_key].append(loop_mean)
+            dictionary[war_key]['war_opt'].append(opt_mean)
+            dictionary[war_key]['war_sim'].append(sim_mean)
+            dictionary[war_key]['war_diff'].append(diff_mean)
+            
 
-
-        return pieces_lst
+        return dictionary[key]
 
     
 
