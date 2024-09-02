@@ -164,7 +164,9 @@ class reccomend:
             
         scores = self.return_pieces(optimal, pieces, wardrobe, only_new)
         
-        return scores 
+        
+        return scores
+        
     
         
             
@@ -214,7 +216,7 @@ class reccomend:
                 for y in piece_neighbs_index:
                     diff.append(np.mean([graph[x, y]/graph[x, :].sum() for x in war_neighbs_index]))
                 
-                total_diff.append(np.mean(diff))
+                total_diff.append(1 - np.mean(diff))
            
             pieces_list.append(np.mean(total_diff))
          
@@ -254,7 +256,7 @@ class reccomend:
             else:
                 neighbor_prox = 0
             
-            diff.append(neighbor_prox)
+            diff.append(1 - neighbor_prox)
         
         return diff
             
@@ -320,8 +322,8 @@ class reccomend:
                     dictionary[war_key]['war_sim'].append(item_prox)
                     diff_y = []
                     for y in pieces_index:
-                        diff_y.append(np.mean([graph[x, y]/graph[x, :].sum() for x in war_index for y in pieces_index]))
-                    diff = np.mean(diff_y)
+                        diff_y.append(np.mean([graph[x, y]/graph[x, :].sum() for x in war_index]))
+                    diff = (1 - np.mean(diff_y))
                     dictionary[war_key]['war_diff'].append(diff)
                     dictionary[war_key]['war_opt'].append(item_prox * diff)
 
@@ -351,7 +353,7 @@ class reccomend:
             dictionary[war_key]['war_sim'].append(sim_mean)
             dictionary[war_key]['war_diff'].append(diff_mean)
             
-
+        
         return dictionary[key]
 
     
